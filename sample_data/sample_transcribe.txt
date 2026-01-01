@@ -1,0 +1,31 @@
+Question 1:
+What is this document about?
+
+Answer 1:
+This document appears to be the resume of Shyam Thakkar, showcasing his experience and skills in various AI/ML-related roles. It highlights his achievements and accomplishments in different internships and projects, including data analysis, machine learning development, and software engineering. The document provides a comprehensive overview of Shyam's technical expertise and professional experience.
+
+Sources:
+
+Shyam_thakkar_resume.pdf (page 1)
+----------------------------------------------------------------------------------------------------
+Question 2:
+What has he done in GenAI till now?
+
+Answer 2:
+Based on the provided context, it appears that Shyam Thakkar has experience with GenAI from his role at WeServeCodes Pvt Ltd - SDE-1 (GenAI Developer).
+
+Specifically, he has:
+
+Engineered AI-driven automation systems by integrating LLMs with complex business logic.
+
+Built robust data-extraction and validation pipelines that combined web automation, structured LLM output, and real-time API checks to ensure accuracy, consistency, and trust in generated data.
+
+Designed and implemented custom tool-call frameworks allowing LLMs to safely interact with external APIs, verify user-provided inputs, and request missing or corrected information when required.
+
+These tasks suggest that Shyam has hands-on experience with GenAI development, including integrating Large Language Models (LLMs) with complex systems, building data-extraction pipelines, and designing custom tool-call frameworks.
+
+Sources:
+
+Shyam_thakkar_resume.pdf (page 2)
+
+Shyam_thakkar_resume.pdf (page 1)
