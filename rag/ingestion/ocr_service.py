@@ -1,52 +1,116 @@
-import os
-import time
-from typing import Optional
+"""
+OCR Service using Ollama vision model (deepseek-ocr).
+Extracts text from images using multimodal LLM.
+"""
+import base64
+from io import BytesIO
+from typing import List, Optional
+from PIL import Image
+from langchain_ollama import ChatOllama
+from langchain_core.messages import HumanMessage
+
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from config import OCR_MODEL, MAX_TOKENS, TEMPERATURE
+
 
 class OCRService:
-    def __init__(self, api_key: Optional[str] = None):
+    """OCR service using Ollama vision model."""
+    
+    # Instruction prompt for OCR
+    OCR_INSTRUCTION = """<image>\nFree OCR."""
+    
+    def __init__(self, model_name: Optional[str] = None):
         """
-        Initialize the OCR service.
+        Initialize the OCR service with Ollama vision model.
         
         Args:
-            api_key: DeepSeek API key. If not provided, tries to fetch from environment.
+            model_name: Ollama model name (default: from config)
         """
-        self.api_key = api_key or os.getenv("DEEPSEEK_API_KEY")
-        
-    def extract_text(self, file_path: str) -> str:
+        self.model_name = model_name or OCR_MODEL
+        self.llm = ChatOllama(
+            model=self.model_name,
+            temperature=TEMPERATURE,
+            num_predict=MAX_TOKENS,
+        )
+    
+    def _image_to_base64(self, image: Image.Image) -> str:
+        """Convert PIL Image to base64 string (PNG)."""
+        buffer = BytesIO()
+        # Convert to RGB if necessary (handles RGBA, P mode, etc.)
+        if image.mode not in ('RGB', 'L'):
+            image = image.convert('RGB')
+        image.save(buffer, format="PNG")
+        return base64.b64encode(buffer.getvalue()).decode("utf-8")
+    
+    def extract_text(self, image: Image.Image) -> str:
         """
-        Extract text from an image file using OCR.
+        Extract text from a single image using OCR.
         
         Args:
-            file_path: Path to the image file.
+            image: PIL Image object
             
         Returns:
-            Extracted text string.
+            Extracted text string
         """
-        # Check if we have a valid key (not None and not the default example placeholder)
-        if self.api_key and "your_" not in self.api_key:
-            return self._call_deepseek_ocr(file_path)
-        else:
-            # Fallback for evaluation/testing without costs/keys
-            print(f"DeepSeek API key not configured (or is placeholder). Using Mock OCR for {file_path}")
-            return self._mock_ocr(file_path)
-            
-    def _call_deepseek_ocr(self, file_path: str) -> str:
-        """
-        Actual integration point for DeepSeek OCR.
-        """
-        # Note: In a real scenario, we would use requests to hit the DeepSeek OCR endpoint.
-        # Example structure:
-        # headers = {"Authorization": f"Bearer {self.api_key}"}
-        # files = {'file': open(file_path, 'rb')}
-        # response = requests.post("https://api.deepseek.com/v1/ocr", headers=headers, files=files)
-        # return response.json()['text']
+        img_b64 = self._image_to_base64(image)
         
-        # Simulating API latency
-        time.sleep(1)
-        return f"[DeepSeek OCR Result] Extracted text from {os.path.basename(file_path)}"
-
-    def _mock_ocr(self, file_path: str) -> str:
+        message = HumanMessage(
+            content=[
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/png;base64,{img_b64}"
+                    },
+                },
+                {"type": "text", "text": self.OCR_INSTRUCTION},
+            ]
+        )
+        
+        response = self.llm.invoke([message])
+        return response.content
+    
+    def extract_text_batch(self, images: List[Image.Image]) -> List[str]:
         """
-        Mock OCR for testing and assignment evaluation when key is missing.
+        Extract text from multiple images in batch.
+        
+        Args:
+            images: List of PIL Image objects
+            
+        Returns:
+            List of extracted text strings
         """
-        return f"This is a mocked OCR result for the image file: {os.path.basename(file_path)}. \nContains sample text for testing the RAG pipeline."
+        messages = []
+        for image in images:
+            img_b64 = self._image_to_base64(image)
+            messages.append(
+                HumanMessage(
+                    content=[
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/png;base64,{img_b64}"
+                            },
+                        },
+                        {"type": "text", "text": self.OCR_INSTRUCTION},
+                    ]
+                )
+            )
+        
+        # Batch process all images
+        responses = self.llm.batch([[msg] for msg in messages])
+        return [resp.content for resp in responses]
+    
+    def extract_text_from_path(self, image_path: str) -> str:
+        """
+        Extract text from an image file path.
+        
+        Args:
+            image_path: Path to the image file
+            
+        Returns:
+            Extracted text string
+        """
+        image = Image.open(image_path).convert("RGB")
+        return self.extract_text(image)
