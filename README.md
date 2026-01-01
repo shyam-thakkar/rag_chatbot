@@ -40,7 +40,7 @@ A Retrieval-Augmented Generation (RAG) system with LangGraph agentic workflow, O
 |-----------|------------|
 | LLM/OCR | Ollama (deepseek-ocr, llama3.2) |
 | Orchestration | LangGraph |
-| Vector Store | ChromaDB |
+| Vector Store | Faiss |
 | Embeddings | Ollama (nomic-embed-text) |
 | UI | Streamlit |
 | Document Processing | pypdf, pdf2image, Pillow |
